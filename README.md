@@ -92,7 +92,11 @@ const findings = detect(
 ### Simple checks
 
 ```typescript
-import { isPrivateKey, isSeedPhrase, containsSecret } from "@keeperagent/crypto-key-guard";
+import {
+  isPrivateKey,
+  isSeedPhrase,
+  containsSecret,
+} from "@keeperagent/crypto-key-guard";
 
 isPrivateKey(
   "0x4c0883a69102937d6231471b5dbb6204fe512961708279f3e5a1b0d5e8f2a5b1",
@@ -136,7 +140,7 @@ type Finding = {
 };
 ```
 
-### `redact(text: string): RedactResult`
+### `redact(text: string, options?: RedactOptions): RedactResult`
 
 Replace secrets with safe tokens. Returns a map to restore originals.
 
@@ -144,7 +148,17 @@ Replace secrets with safe tokens. Returns a map to restore originals.
 type RedactResult = {
   text: string; // text with secrets replaced by tokens
   secrets: Map<string, string>; // token → original value
-  findings: Finding[]; // all findings
+  findings: Finding[]; // built-in crypto findings
+};
+
+type RedactOptions = {
+  additionalRules?: Rule[]; // custom rules to redact beyond crypto keys
+};
+
+type Rule = {
+  pattern: RegExp; // must include the `g` flag
+  label: string; // human-readable label
+  token: string; // token prefix, e.g. "OPENAI_KEY" → [OPENAI_KEY_1]
 };
 ```
 
@@ -165,6 +179,34 @@ Check if a string is a BIP39 seed phrase (12 or 24 words).
 Check if a string is either a private key or seed phrase.
 
 ## Use Cases
+
+### Custom Rules
+
+Extend `redact` to handle any secret type beyond crypto keys:
+
+```typescript
+import { redact, restore, Rule } from "@keeperagent/crypto-key-guard";
+
+const customRules: Rule[] = [
+  {
+    pattern: /sk-[a-zA-Z0-9]{48}/g,
+    label: "OpenAI API Key",
+    token: "OPENAI_KEY",
+  },
+  {
+    pattern: /Bearer [a-zA-Z0-9\-._~+/]+=*/g,
+    label: "Bearer Token",
+    token: "BEARER_TOKEN",
+  },
+];
+
+const { text, secrets } = redact(userInput, { additionalRules: customRules });
+// Crypto keys AND custom rules are all redacted
+// e.g. "call api with [OPENAI_KEY_1] and eth key [EVM_KEY_1]"
+
+const response = await llm.invoke(text);
+const restored = restore(response, secrets);
+```
 
 ### AI Agent / LLM Gateway
 

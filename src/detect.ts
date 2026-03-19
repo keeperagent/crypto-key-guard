@@ -14,8 +14,16 @@ const isSeedPhrase = (words: string[]): boolean => {
 };
 
 const detectSeedPhrases = (text: string): Finding[] => {
+  // Track actual positions of each word in the original text
+  const wordMatches: { word: string; start: number; end: number; }[] = [];
+  const wordRegex = /\S+/g;
+  let m;
+  while ((m = wordRegex.exec(text)) !== null) {
+    wordMatches.push({ word: m[0], start: m.index, end: m.index + m[0].length });
+  }
+
+  const words = wordMatches.map((w) => w.word);
   const findings: Finding[] = [];
-  const words = text.split(/\s+/);
 
   // Try to find sequences of 24 or 12 consecutive BIP39 words
   for (const targetLength of [24, 12]) {
@@ -31,14 +39,13 @@ const detectSeedPhrases = (text: string): Finding[] => {
       const candidate = words.slice(startIndex, startIndex + targetLength);
 
       if (isSeedPhrase(candidate)) {
-        const phrase = candidate.join(" ");
-        const beforeWords = words.slice(0, startIndex).join(" ");
-        const start = beforeWords.length > 0 ? beforeWords.length + 1 : 0;
+        const start = wordMatches[startIndex].start;
+        const end = wordMatches[startIndex + targetLength - 1].end;
+        const value = text.slice(start, end);
 
         // Check this range isn't already covered by a longer finding
         const alreadyCovered = findings.some(
-          (finding) =>
-            start >= finding.start && start + phrase.length <= finding.end,
+          (finding) => start >= finding.start && end <= finding.end,
         );
         if (alreadyCovered) {
           continue;
@@ -47,9 +54,9 @@ const detectSeedPhrases = (text: string): Finding[] => {
         findings.push({
           type: targetLength === 12 ? "seed_phrase_12" : "seed_phrase_24",
           label: `BIP39 Seed Phrase (${targetLength} words)`,
-          value: phrase,
+          value,
           start,
-          end: start + phrase.length,
+          end,
         });
       }
     }

@@ -2,7 +2,7 @@ export { detect } from "./detect";
 export type { Finding } from "./detect";
 
 export { redact, restore } from "./redact";
-export type { RedactResult } from "./redact";
+export type { RedactResult, Rule, RedactOptions } from "./redact";
 
 export { guard } from "./guard";
 export type { GuardResult } from "./guard";
