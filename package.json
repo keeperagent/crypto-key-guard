@@ -1,0 +1,52 @@
+{
+  "name": "@keeper/crypto-key-guard",
+  "version": "0.1.0",
+  "description": "Detect, redact, and block crypto private keys and seed phrases in text. Protect sensitive secrets from leaking to LLMs and AI agents.",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "crypto",
+    "private-key",
+    "seed-phrase",
+    "mnemonic",
+    "bip39",
+    "security",
+    "redact",
+    "detect",
+    "llm",
+    "ai-agent",
+    "solana",
+    "ethereum",
+    "evm",
+    "aptos",
+    "sui",
+    "bitcoin",
+    "wallet",
+    "secret"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": "keeperagent",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/keeperagent/crypto-key-guard"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.0"
+  }
+}
