@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { detect } from "../src/detect";
 import { isPrivateKey, isSeedPhrase } from "../src/check";
-import { redact, restore } from "../src/redact";
+import { redact, restore, Rule } from "../src/redact";
 import { guard } from "../src/guard";
 
 // Example keys (NOT real keys — generated for testing only)
@@ -133,7 +133,7 @@ describe("redact", () => {
   });
 
   it("should redact Solana key", () => {
-    const { text, secrets } = redact(`key: ${SOLANA_PRIVATE_KEY}`);
+    const { text } = redact(`key: ${SOLANA_PRIVATE_KEY}`);
     expect(text).not.toContain(SOLANA_PRIVATE_KEY);
     expect(text).toContain("[SOLANA_KEY_1]");
   });
@@ -141,6 +141,81 @@ describe("redact", () => {
   it("should return unchanged text when no secrets", () => {
     const original = "swap 1 SOL to USDC";
     const { text, secrets } = redact(original);
+    expect(text).toBe(original);
+    expect(secrets.size).toBe(0);
+  });
+});
+
+describe("redact with additionalRules", () => {
+  const openAiRule: Rule = {
+    pattern: /sk-[a-zA-Z0-9]{48}/g,
+    label: "OpenAI API Key",
+    token: "OPENAI_KEY",
+  };
+
+  const bearerRule: Rule = {
+    pattern: /Bearer [a-zA-Z0-9\-._~+/]+=*/g,
+    label: "Bearer Token",
+    token: "BEARER_TOKEN",
+  };
+
+  it("should redact a custom rule match", () => {
+    const key = "sk-" + "a".repeat(48);
+    const original = `call openai with ${key}`;
+    const { text, secrets } = redact(original, { additionalRules: [openAiRule] });
+
+    expect(text).not.toContain(key);
+    expect(text).toContain("[OPENAI_KEY_1]");
+    expect(secrets.get("[OPENAI_KEY_1]")).toBe(key);
+  });
+
+  it("should restore custom rule token back to original", () => {
+    const key = "sk-" + "b".repeat(48);
+    const original = `use key ${key} for request`;
+    const { text, secrets } = redact(original, { additionalRules: [openAiRule] });
+    const restored = restore(text, secrets);
+    expect(restored).toBe(original);
+  });
+
+  it("should number multiple matches of the same custom rule", () => {
+    const key1 = "sk-" + "a".repeat(48);
+    const key2 = "sk-" + "b".repeat(48);
+    const { text, secrets } = redact(`key1=${key1} key2=${key2}`, {
+      additionalRules: [openAiRule],
+    });
+
+    expect(secrets.size).toBe(2);
+    expect(text).toContain("[OPENAI_KEY_1]");
+    expect(text).toContain("[OPENAI_KEY_2]");
+  });
+
+  it("should redact multiple different custom rules", () => {
+    const apiKey = "sk-" + "c".repeat(48);
+    const original = `key=${apiKey} auth=Bearer mytoken123`;
+    const { text, secrets } = redact(original, {
+      additionalRules: [openAiRule, bearerRule],
+    });
+
+    expect(text).not.toContain(apiKey);
+    expect(text).not.toContain("Bearer mytoken123");
+    expect(secrets.size).toBe(2);
+  });
+
+  it("should redact both built-in crypto keys and custom rules together", () => {
+    const apiKey = "sk-" + "d".repeat(48);
+    const original = `openai=${apiKey} eth=${EVM_PRIVATE_KEY}`;
+    const { text, secrets } = redact(original, { additionalRules: [openAiRule] });
+
+    expect(text).not.toContain(apiKey);
+    expect(text).not.toContain(EVM_PRIVATE_KEY);
+    expect(secrets.size).toBe(2);
+    expect(text).toContain("[OPENAI_KEY_1]");
+    expect(text).toContain("[EVM_KEY_1]");
+  });
+
+  it("should not redact when custom rule does not match", () => {
+    const original = "no secrets here";
+    const { text, secrets } = redact(original, { additionalRules: [openAiRule] });
     expect(text).toBe(original);
     expect(secrets.size).toBe(0);
   });
