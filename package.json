@@ -1,5 +1,5 @@
 {
-  "name": "@keeper/crypto-key-guard",
+  "name": "@keeperagent/crypto-key-guard",
   "version": "0.1.0",
   "description": "Detect, redact, and block crypto private keys and seed phrases in text. Protect sensitive secrets from leaking to LLMs and AI agents.",
   "main": "dist/index.js",

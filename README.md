@@ -24,7 +24,7 @@ AI agents and LLMs are increasingly used in crypto/Web3 applications. Users acci
 ## Install
 
 ```bash
-npm install crypto-key-guard
+npm install @keeperagent/crypto-key-guard
 ```
 
 ## Quick Start
@@ -32,7 +32,7 @@ npm install crypto-key-guard
 ### Block messages containing secrets
 
 ```typescript
-import { guard } from "crypto-key-guard";
+import { guard } from "@keeperagent/crypto-key-guard";
 
 const userMessage =
   "use this key 0x4c0883a69102937d6231471b5dbb6204fe512961708279f3e5a1b0d5e8f2a5b1";
@@ -54,7 +54,7 @@ sendToLLM(userMessage);
 ### Redact secrets before sending to LLM, restore after
 
 ```typescript
-import { redact, restore } from "crypto-key-guard";
+import { redact, restore } from "@keeperagent/crypto-key-guard";
 
 const userMessage =
   "run workflow with key 0x4c0883a69102937d6231471b5dbb6204fe512961708279f3e5a1b0d5e8f2a5b1";
@@ -74,7 +74,7 @@ const restored = restore(llmResponse, secrets);
 ### Detect secrets with details
 
 ```typescript
-import { detect } from "crypto-key-guard";
+import { detect } from "@keeperagent/crypto-key-guard";
 
 const findings = detect(
   "my solana key is 4wBqpZM9msxygKxGzHYV5mGDrEULFnPGxFkQR3grRKAVchxbPFJNS9bSEHvPpPUFhEigmMbPB9SnCFDYEYPk6FaE",
@@ -92,7 +92,7 @@ const findings = detect(
 ### Simple checks
 
 ```typescript
-import { isPrivateKey, isSeedPhrase, containsSecret } from "crypto-key-guard";
+import { isPrivateKey, isSeedPhrase, containsSecret } from "@keeperagent/crypto-key-guard";
 
 isPrivateKey(
   "0x4c0883a69102937d6231471b5dbb6204fe512961708279f3e5a1b0d5e8f2a5b1",
@@ -171,7 +171,7 @@ Check if a string is either a private key or seed phrase.
 Prevent user secrets from reaching LLM providers:
 
 ```typescript
-import { guard, redact, restore } from "crypto-key-guard";
+import { guard, redact, restore } from "@keeperagent/crypto-key-guard";
 
 const handleUserMessage = (message: string) => {
   // Option 1: Block entirely
@@ -192,7 +192,7 @@ const handleUserMessage = (message: string) => {
 Strip secrets from all API responses:
 
 ```typescript
-import { redact } from "crypto-key-guard";
+import { redact } from "@keeperagent/crypto-key-guard";
 
 app.use((req, res, next) => {
   const originalJson = res.json.bind(res);
@@ -209,7 +209,7 @@ app.use((req, res, next) => {
 Block forms or chat inputs containing secrets:
 
 ```typescript
-import { containsSecret } from "crypto-key-guard";
+import { containsSecret } from "@keeperagent/crypto-key-guard";
 
 const onSubmit = (input: string) => {
   if (containsSecret(input)) {
